@@ -119,9 +119,9 @@ main()
       		if (i==4)
 			task5_code();
 			if (i==5)
-				task6_code();
+			task6_code();
 			if (i==6)
-				task7_code();
+			task7_code();
 
 		clock_gettime(CLOCK_REALTIME, &time_2);
 
@@ -337,7 +337,7 @@ void task2_code()
 		}
     	}
 	
-	// when the random variable uno=1, then aperiodic task 6 must
+	// when the random variable uno=2, then aperiodic task 7 must
   	// be executed
   	if (uno == 2)
     	{

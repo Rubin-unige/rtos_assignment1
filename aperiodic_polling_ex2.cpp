@@ -1,7 +1,7 @@
 
 
-//This exercise shows how to schedule threads with Rate Monotonic with a Polling Server
-// This exercise add periodic and an aperiodic tasks to this provided template
+// This exercise shows how to schedule threads with Rate Monotonic with a Polling Server
+// This exercise adds periodic and an aperiodic tasks to this provided template
 
 #include <pthread.h>
 #include <stdio.h>
@@ -28,7 +28,7 @@ void task7_code( );
 void *task1( void *);
 void *task2( void *);
 void *task3( void *);
-void *task4( void *);
+void *task4( void *); // added task 4
 
 //aperiodic tasks
 // We do not need to create thread functions corresponding to aperiodic tasks
@@ -38,16 +38,16 @@ void *task4( void *);
 void *polling_server( void *);
 
 // initialization of mutexes and conditions (only for aperiodic scheduling)
-pthread_mutex_t mutex_task_5 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_task_5 = PTHREAD_MUTEX_INITIALIZER; // change from 4 to 5
 pthread_mutex_t mutex_task_6 = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t mutex_task_7 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_task_7 = PTHREAD_MUTEX_INITIALIZER; // initialised mutex for task 7
 
 // we do not need conditioned variable for the polling server, since aperiodic tasks are no more implemented as threads
 // however we need to add two simple flags that are used to tell the Polling Server when it is necessary to schedule
-// Aperiodic tasks
+// Aperiodic tasks, change and added task
 bool flag5 = false;
 bool flag6 = false;
-bool flag7 = false;
+bool flag7 = false; 
 
 // the polling server keeps a queue of requests, and initialize the indexes 
 // of the queue (one for reading, one for writing) to 0;
@@ -58,7 +58,7 @@ int qindex2 = 0;
 #define INNERLOOP 100
 #define OUTERLOOP 2000
 
-// We now have 3 periodic tasks and 1 Polling Server, which totals 4 periodic tasks
+// We now have 4 periodic tasks and 1 Polling Server, which totals 5 periodic tasks
 #define NPERIODICTASKS 5 // with new task
 
 // We only need periodic tasks and the Polling server to be implemented like threads, 
@@ -145,9 +145,9 @@ main()
       		if (i==5)
 			task5_code();
 			if (i==6)
-				task6_code();
+			task6_code();
 			if (i==7)
-				task7_code();
+			task7_code();
 
 		clock_gettime(CLOCK_REALTIME, &time_2);
 
@@ -159,7 +159,7 @@ main()
 			       +(time_2.tv_nsec-time_1.tv_nsec);
       		printf("\nWorst Case Execution Time %d=%f \n", i, WCET[i]);
 
-		// After computing the execution time of aperiodic tasks (e.g., i=4 or i=5)
+		// After computing the execution time of aperiodic tasks ( i=5 or i=6 or i = 7)
 		// the capacity of the Polling Server is updated accordingly. Notice that in this
 		// simplified example, we assume that the Polling Server has always the required 
 		// Capacity to fully execute an aperiodic task within the same period of the Server.
@@ -491,7 +491,7 @@ void *task4( void *ptr)
       		task4_code();
 
 		// Please be careful: the index 0 in all structures now refers to the Polling Server,
-		// whereas the third periodic task is now assigned the index 3
+		// whereas the third periodic task is now assigned the index 4
 		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &next_arrival_time[4], NULL);
 		long int next_arrival_nanoseconds = next_arrival_time[4].tv_sec*1000000000 + next_arrival_time[4].tv_nsec + periods[4];
 		next_arrival_time[4].tv_sec= next_arrival_nanoseconds/1000000000;
@@ -511,7 +511,7 @@ void task5_code()
   	fflush(stdout);
 }
 
-// the thread function void *task4(void*) does not exist any more,
+// the thread function void *task5(void*) does not exist any more,
 // since aperiodic tasks are no more implemented as threads. Instead, we only have a 
 // thread function void *polling_server(void*) whose purpose is to execute aperiodic threads 
 // when conditions are met
@@ -527,7 +527,7 @@ void task6_code()
   	printf(" ]6 "); fflush(stdout);
 }
 
-// the thread function void *task5(void*) does not exist any more,
+// the thread function void *task6(void*) does not exist any more,
 // since aperiodic tasks are no more implemented as threads. Instead, we only have a 
 // thread function void *polling_server(void*) whose purpose is to execute aperiodic threads 
 // when conditions are met
@@ -544,6 +544,10 @@ void task7_code()
     	}	
   	printf(" ]7 "); fflush(stdout);
 }
+// the thread function void *task7(void*) does not exist any more,
+// since aperiodic tasks are no more implemented as threads. Instead, we only have a 
+// thread function void *polling_server(void*) whose purpose is to execute aperiodic threads 
+// when conditions are met
 
 void *polling_server( void *ptr)
 {
@@ -592,7 +596,7 @@ void *polling_server( void *ptr)
 			qindex1 = (qindex1 + 1) % 20; 
 			flag7 = false;
 		}
-     		pthread_mutex_unlock(&mutex_task_6);
+     		pthread_mutex_unlock(&mutex_task_7);
 
 		// if the queue contains a request to execute task5, 
 		// do it and move the index to the next element of the queue
