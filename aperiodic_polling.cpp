@@ -299,34 +299,34 @@ void task1_code()
   	// be executed
   	if (uno == 0)
     	{
-      		printf(":ex(4)");fflush(stdout);
-      		pthread_mutex_lock(&mutex_task_4);
-
-		flag4 = true;
-		// We do not need to signal a variable here, since we are not
-		// waking up a thread. If we want to execute the aperiodic task 4,
-		// it is sufficient to properly set the value of a standard variable, that
-		// will be read by the Polling Server at the beginning of its execution to check
-		// if it is required to execute the aperiodic task
-
-      		pthread_mutex_unlock(&mutex_task_4);
-	}
-
-  	// when the random variable uno=1, then aperiodic task 5 must
-  	// be executed
-  	if (uno == 1)
-    	{
       		printf(":ex(5)");fflush(stdout);
       		pthread_mutex_lock(&mutex_task_5);
 
 		flag5 = true;
 		// We do not need to signal a variable here, since we are not
-		// waking up a thread. If we want to execute the aperiodic task 4,
+		// waking up a thread. If we want to execute the aperiodic task 5,
 		// it is sufficient to properly set the value of a standard variable, that
 		// will be read by the Polling Server at the beginning of its execution to check
 		// if it is required to execute the aperiodic task
 
       		pthread_mutex_unlock(&mutex_task_5);
+	}
+
+  	// when the random variable uno=1, then aperiodic task 6 must
+  	// be executed
+  	if (uno == 1)
+    	{
+      		printf(":ex(6)");fflush(stdout);
+      		pthread_mutex_lock(&mutex_task_6);
+
+		flag6 = true;
+		// We do not need to signal a variable here, since we are not
+		// waking up a thread. If we want to execute the aperiodic task 6,
+		// it is sufficient to properly set the value of a standard variable, that
+		// will be read by the Polling Server at the beginning of its execution to check
+		// if it is required to execute the aperiodic task
+
+      		pthread_mutex_unlock(&mutex_task_6);
     	}
   
   	//print the id of the current task
@@ -381,6 +381,22 @@ void task2_code()
 			uno = rand()*rand()%10;
 		}
     	}
+
+	if (uno == 2)
+    	{
+      		printf(":ex(7)");fflush(stdout);
+      		pthread_mutex_lock(&mutex_task_7);
+
+		flag7 = true;
+		// We do not need to signal a variable here, since we are not
+		// waking up a thread. If we want to execute the aperiodic task 7,
+		// it is sufficient to properly set the value of a standard variable, that
+		// will be read by the Polling Server at the beginning of its execution to check
+		// if it is required to execute the aperiodic task
+
+      		pthread_mutex_unlock(&mutex_task_7);
+    	}
+  
 	//print the id of the current task
   	printf(" ]2 "); fflush(stdout);
 }
