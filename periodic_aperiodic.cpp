@@ -1,6 +1,6 @@
-//compile with: g++ -lpthread <sourcename> -o <executablename>
 
-//This exercise show how to schedule threads with Rate Monotonic with aperiodic tasks in background
+// This exercise show how to schedule threads with Rate Monotonic with aperiodic tasks in background
+// This exercise adds an aperiodic task and a periodic to already available task template
 
 #include <pthread.h>
 #include <stdio.h>
@@ -15,32 +15,38 @@
 void task1_code( );
 void task2_code( );
 void task3_code( );
+void task4_code( ); // periodic task added, used task 4 for better readability
 
 //code of aperiodic tasks
-void task4_code( );
-void task5_code( );
+void task5_code( ); // changed from task 4 to 5 
+void task6_code( );
+void task7_code( ); // aperiodic task added 
 
 //characteristic function of the thread, only for timing and synchronization
 //periodic tasks
 void *task1( void *);
 void *task2( void *);
 void *task3( void *);
+void *task4( void *);
 
 //aperiodic tasks
-void *task4( void *);
 void *task5( void *);
+void *task6( void *);
+void *task7( void *);
 
 // initialization of mutexes and conditions (only for aperiodic scheduling)
-pthread_mutex_t mutex_task_4 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t mutex_task_5 = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond_task_4 = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t mutex_task_6 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_task_7 = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond_task_5 = PTHREAD_COND_INITIALIZER;
+pthread_cond_t cond_task_6 = PTHREAD_COND_INITIALIZER;
+pthread_cond_t cond_task_7 = PTHREAD_COND_INITIALIZER;
 
 #define INNERLOOP 1000
 #define OUTERLOOP 100
 
-#define NPERIODICTASKS 3
-#define NAPERIODICTASKS 2
+#define NPERIODICTASKS 4
+#define NAPERIODICTASKS 3
 #define NTASKS NPERIODICTASKS + NAPERIODICTASKS
 
 long int periods[NTASKS];
@@ -63,10 +69,12 @@ main()
   	periods[0]= 100000000; //in nanoseconds
   	periods[1]= 200000000; //in nanoseconds
   	periods[2]= 400000000; //in nanoseconds
+	periods[3]= 800000000; //in nanoseconds, keeping the harmonic relation so ulub is 1
 
   	//for aperiodic tasks we set the period equals to 0
-  	periods[3]= 0; 
   	periods[4]= 0; 
+  	periods[5]= 0;
+	periods[6]= 0; 
 
 	//this is not strictly necessary, but it is convenient to
 	//assign a name to the maximum and the minimum priotity in the
@@ -104,12 +112,16 @@ main()
 			task2_code();
       		if (i==2)
 			task3_code();
-      		
-      		//aperiodic tasks
       		if (i==3)
 			task4_code();
+
+			//aperiodic tasks
       		if (i==4)
 			task5_code();
+			if (i==5)
+				task6_code();
+			if (i==6)
+				task7_code();
 
 		clock_gettime(CLOCK_REALTIME, &time_2);
 
@@ -123,7 +135,7 @@ main()
     	}
 
     	// compute U
-	double U = WCET[0]/periods[0]+WCET[1]/periods[1]+WCET[2]/periods[2];
+	double U = WCET[0]/periods[0]+WCET[1]/periods[1]+WCET[2]/periods[2]+ WCET[3]/periods[3];
 
     	// compute Ulub by considering the fact that we have harmonic relationships between periods
 	double Ulub = 1;
@@ -209,11 +221,14 @@ main()
   	iret[2] = pthread_create( &(thread_id[2]), &(attributes[2]), task3, NULL);
    	iret[3] = pthread_create( &(thread_id[3]), &(attributes[3]), task4, NULL);
   	iret[4] = pthread_create( &(thread_id[4]), &(attributes[4]), task5, NULL);
+	iret[5] = pthread_create( &(thread_id[5]), &(attributes[5]), task6, NULL);
+	iret[6] = pthread_create( &(thread_id[6]), &(attributes[6]), task7, NULL);
 
   	// join all threads (pthread_join)
   	pthread_join( thread_id[0], NULL);
   	pthread_join( thread_id[1], NULL);
   	pthread_join( thread_id[2], NULL);
+	pthread_join( thread_id[3], NULL);
 
   	// set the next arrival time for each task. This is not the beginning of the first
 	// period, but the end of the first period and beginning of the next one. 
@@ -226,6 +241,9 @@ main()
 }
 
 // application specific task_1 code
+// aperiodic task 5 and 6 executes within task 1 and task 7 executes within task 2
+// random variable uno is used to execute them, when uno is 0 task 5 execute, when uno is 1 task 6 executes and when uno is 2 task 7 executes
+// range of value of uno is 0-9
 void task1_code()
 {
 	//print the id of the current task
@@ -246,27 +264,27 @@ void task1_code()
   	// be executed
   	if (uno == 0)
     	{
-      		printf(":ex(4)");fflush(stdout);
+      		printf(":ex(5)");fflush(stdout);
 	// In theory, we should protect conditions using mutexes. However, in a real-time application, something undesirable may happen.
 	// Indeed, when task1 takes the mutex and sends the condition, task4 is executed and is given the mutex by the kernel. Which means
 	// that task1 (higher priority) would be blocked waiting for task4 to finish (lower priority). This is of course unacceptable,
 	// as it would produced a priority inversion. For this reason, we are not putting mutexes here. A better solution should be found.
 
-//      		pthread_mutex_lock(&mutex_task_4);
-      		pthread_cond_signal(&cond_task_4);
-//      		pthread_mutex_unlock(&mutex_task_4);
-	}
-
-  	// when the random variable uno=1, then aperiodic task 5 must
-  	// be executed
-  	if (uno == 1)
-    	{
-      		printf(":ex(5)");fflush(stdout);
-
-	// See below why mutexes have been commented
 //      		pthread_mutex_lock(&mutex_task_5);
       		pthread_cond_signal(&cond_task_5);
 //      		pthread_mutex_unlock(&mutex_task_5);
+	}
+
+  	// when the random variable uno=1, then aperiodic task 6 must
+  	// be executed
+  	if (uno == 1)
+    	{
+      		printf(":ex(6)");fflush(stdout);
+
+	// See below why mutexes have been commented
+//      		pthread_mutex_lock(&mutex_task_6);
+      		pthread_cond_signal(&cond_task_6);
+//      		pthread_mutex_unlock(&mutex_task_6);
     	}
   
   	//print the id of the current task
@@ -318,6 +336,19 @@ void task2_code()
 			uno = rand()*rand()%10;
 		}
     	}
+	
+	// when the random variable uno=1, then aperiodic task 6 must
+  	// be executed
+  	if (uno == 2)
+    	{
+      		printf(":ex(7)");fflush(stdout);
+
+	// See below why mutexes have been commented
+	//   pthread_mutex_lock(&mutex_task_7);
+      		pthread_cond_signal(&cond_task_7);
+	//    pthread_mutex_unlock(&mutex_task_7);
+    	}
+
 	//print the id of the current task
   	printf(" ]2 "); fflush(stdout);
 }
@@ -378,19 +409,55 @@ void *task3( void *ptr)
     }
 }
 
+// fucntions allocated to periodic task 4
 void task4_code()
 {
+	//print the id of the current task
   	printf(" 4[ "); fflush(stdout);
+	int i,j;
+	double uno;
+  	for (i = 0; i < OUTERLOOP; i++)
+    	{
+      		for (j = 0; j < INNERLOOP; j++);		
+			double uno = rand()*rand()%10;
+    	}
+	//print the id of the current task
+  	printf(" ]4 "); fflush(stdout);
+}
+
+void *task4( void *ptr)
+{
+	// set thread affinity, that is the processor on which threads shall run
+	cpu_set_t cset;
+	CPU_ZERO (&cset);
+	CPU_SET(0, &cset);
+	pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cset);
+
+	int i=0;
+  	for (i=0; i < 100; i++)
+    	{
+      		task4_code();
+
+		clock_nanosleep(CLOCK_REALTIME, TIMER_ABSTIME, &next_arrival_time[3], NULL);
+		long int next_arrival_nanoseconds = next_arrival_time[3].tv_nsec + periods[3];
+		next_arrival_time[3].tv_nsec= next_arrival_nanoseconds%1000000000;
+		next_arrival_time[3].tv_sec= next_arrival_time[3].tv_sec + next_arrival_nanoseconds/1000000000;
+    }
+}
+
+void task5_code()
+{
+  	printf(" 5[ "); fflush(stdout);
 	for (int i = 0; i < OUTERLOOP; i++)
     	{
       		for (int j = 0; j < INNERLOOP; j++)
 			double uno = rand()*rand();
     	}
-  	printf(" ]4 "); fflush(stdout);
+  	printf(" ]5 "); fflush(stdout);
   	fflush(stdout);
 }
 
-void *task4( void *)
+void *task5( void *)
 {
 	// set thread affinity, that is the processor on which threads shall run
 	cpu_set_t cset;
@@ -403,26 +470,26 @@ void *task4( void *)
     	{
 		// wait for the proper condition to be signalled
 		// See below why mutexes have been commented
-//		pthread_mutex_lock(&mutex_task_4);
-		pthread_cond_wait(&cond_task_4, &mutex_task_4);
-//		pthread_mutex_unlock(&mutex_task_4);
+//		pthread_mutex_lock(&mutex_task_5);
+		pthread_cond_wait(&cond_task_5, &mutex_task_5);
+//		pthread_mutex_unlock(&mutex_task_5);
 		// execute the task code
- 		task4_code();
+ 		task5_code();
 	}
 }
 
-void task5_code()
+void task6_code()
 {
-  	printf(" 5[ "); fflush(stdout);
+  	printf(" 6[ "); fflush(stdout);
   	for (int i = 0; i < OUTERLOOP; i++)
     	{
       		for (int j = 0; j < INNERLOOP; j++)	
 			double uno = rand()*rand();
     	}	
-  	printf(" ]5 "); fflush(stdout);
+  	printf(" ]6 "); fflush(stdout);
 }
 
-void *task5( void *)
+void *task6( void *)
 {
 	// set thread affinity, that is the processor on which threads shall run
 	cpu_set_t cset;
@@ -434,10 +501,42 @@ void *task5( void *)
     	{
 		// wait for the proper condition to be signalled
 		// See below why mutexes have been commented
-//      		pthread_mutex_lock(&mutex_task_5);
-      		pthread_cond_wait(&cond_task_5, &mutex_task_5);
-//      		pthread_mutex_unlock(&mutex_task_5);
+//      		pthread_mutex_lock(&mutex_task_6);
+      		pthread_cond_wait(&cond_task_6, &mutex_task_6);
+//      		pthread_mutex_unlock(&mutex_task_6);
 		// execute the task code
-      		task5_code();
+      		task6_code();
+    	}
+}
+
+// function for aperiodic task
+void task7_code()
+{
+  	printf(" 7[ "); fflush(stdout);
+  	for (int i = 0; i < OUTERLOOP; i++)
+    	{
+      		for (int j = 0; j < INNERLOOP; j++)	
+			double uno = rand()*rand();
+    	}	
+  	printf(" ]7 "); fflush(stdout);
+}
+
+void *task7( void *)
+{
+	// set thread affinity, that is the processor on which threads shall run
+	cpu_set_t cset;
+	CPU_ZERO (&cset);
+	CPU_SET(0, &cset);
+	pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cset);
+	//add an infinite loop  	
+	while(1)
+    	{
+		// wait for the proper condition to be signalled
+		// See below why mutexes have been commented
+//      		pthread_mutex_lock(&mutex_task_7);
+      		pthread_cond_wait(&cond_task_7, &mutex_task_7);
+//      		pthread_mutex_unlock(&mutex_task_7);
+		// execute the task code
+      		task7_code();
     	}
 }
